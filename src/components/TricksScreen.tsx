@@ -32,11 +32,19 @@ export default function TricksScreen({ players, round, bids, tricks, onTrickChan
               <span className="stepper-badge">bid {bids[i]}</span>
             </div>
             <div className="stepper">
-              <button onClick={() => onTrickChange(i, Math.max(0, tricks[i] - 1))} disabled={tricks[i] <= 0}>
+              <button
+                aria-label={`Decrease ${p.name}'s tricks taken`}
+                onClick={() => onTrickChange(i, Math.max(0, tricks[i] - 1))}
+                disabled={tricks[i] <= 0}
+              >
                 −
               </button>
               <div className="val">{tricks[i]}</div>
-              <button onClick={() => onTrickChange(i, Math.min(round, tricks[i] + 1))} disabled={tricks[i] >= round}>
+              <button
+                aria-label={`Increase ${p.name}'s tricks taken`}
+                onClick={() => onTrickChange(i, Math.min(round, tricks[i] + 1))}
+                disabled={tricks[i] >= round}
+              >
                 +
               </button>
             </div>

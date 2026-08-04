@@ -3,6 +3,8 @@
 import { SUITS, type Suit } from "@/lib/gameLogic";
 import type { GamePlayer } from "@/lib/types";
 
+const SUIT_NAMES: Record<Suit, string> = { "♠": "Spades", "♥": "Hearts", "♦": "Diamonds", "♣": "Clubs" };
+
 type Props = {
   players: GamePlayer[];
   round: number;
@@ -23,6 +25,8 @@ export default function BidScreen({ players, round, trump, bids, onTrumpChange, 
             key={s.sym}
             className={`${s.color} ${trump === s.sym ? "selected" : ""}`}
             onClick={() => onTrumpChange(s.sym)}
+            aria-label={SUIT_NAMES[s.sym]}
+            aria-pressed={trump === s.sym}
           >
             {s.sym}
           </button>
@@ -35,11 +39,19 @@ export default function BidScreen({ players, round, trump, bids, onTrumpChange, 
           <div className="stepper-row" key={p.id}>
             <div className="stepper-name">{p.name}</div>
             <div className="stepper">
-              <button onClick={() => onBidChange(i, Math.max(0, bids[i] - 1))} disabled={bids[i] <= 0}>
+              <button
+                aria-label={`Decrease ${p.name}'s bid`}
+                onClick={() => onBidChange(i, Math.max(0, bids[i] - 1))}
+                disabled={bids[i] <= 0}
+              >
                 −
               </button>
               <div className="val">{bids[i]}</div>
-              <button onClick={() => onBidChange(i, Math.min(round, bids[i] + 1))} disabled={bids[i] >= round}>
+              <button
+                aria-label={`Increase ${p.name}'s bid`}
+                onClick={() => onBidChange(i, Math.min(round, bids[i] + 1))}
+                disabled={bids[i] >= round}
+              >
                 +
               </button>
             </div>
