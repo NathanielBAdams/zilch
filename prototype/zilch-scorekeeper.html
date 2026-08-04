@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Zilch Scorekeeper</title>
+<style>
+  :root{
+    --felt:#0b5d3b;
+    --felt-dark:#08432a;
+    --card:#ffffff;
+    --card-ink:#1a1a1a;
+    --gold:#e8b923;
+    --red-suit:#c0392b;
+    --black-suit:#1a1a1a;
+    --win:#1f8a4c;
+    --lose:#b93b3b;
+    --muted:#6b7280;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(ellipse at top, var(--felt) 0%, var(--felt-dark) 100%);
+    min-height:100vh;
+    color:#fff;
+  }
+  .app{
+    max-width:480px;
+    margin:0 auto;
+    min-height:100vh;
+    padding:20px 16px 40px;
+    display:flex;
+    flex-direction:column;
+  }
+  h1{
+    text-align:center;
+    font-size:26px;
+    letter-spacing:0.5px;
+    margin:4px 0 2px;
+  }
+  h1 .suit{color:var(--gold);}
+  .subtitle{
+    text-align:center;
+    color:rgba(255,255,255,0.7);
+    font-size:13px;
+    margin-bottom:20px;
+  }
+  .card-panel{
+    background:var(--card);
+    color:var(--card-ink);
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    margin-bottom:16px;
+  }
+  .round-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:14px;
+    padding-bottom:12px;
+    border-bottom:1px dashed #ddd;
+  }
+  .round-header .round-label{
+    font-size:13px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+  .round-header .round-cards{
+    font-size:20px;
+    font-weight:700;
+  }
+  label{
+    display:block;
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:6px;
+  }
+  .field{margin-bottom:16px;}
+  input[type=text], input[type=number]{
+    width:100%;
+    padding:10px 12px;
+    border:1.5px solid #d8d8d8;
+    border-radius:10px;
+    font-size:16px;
+  }
+  .stepper-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:10px 0;
+    border-bottom:1px solid #f0f0f0;
+  }
+  .stepper-row:last-child{border-bottom:none;}
+  .stepper-name{
+    font-weight:600;
+    font-size:15px;
+    flex:1;
+  }
+  .stepper-badge{
+    font-size:12px;
+    color:var(--muted);
+    margin-left:6px;
+    font-weight:500;
+  }
+  .stepper{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .stepper button{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    border:none;
+    background:var(--felt);
+    color:#fff;
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .stepper button:disabled{
+    opacity:0.3;
+    cursor:not-allowed;
+  }
+  .stepper .val{
+    min-width:26px;
+    text-align:center;
+    font-size:17px;
+    font-weight:700;
+  }
+  .suit-picker{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .suit-picker button{
+    flex:1;
+    padding:12px 0;
+    border-radius:10px;
+    border:2px solid #e0e0e0;
+    background:#fafafa;
+    font-size:22px;
+    cursor:pointer;
+  }
+  .suit-picker button.selected{
+    border-color:var(--gold);
+    background:#fff8e6;
+  }
+  .suit-picker button.red{color:var(--red-suit);}
+  .suit-picker button.black{color:var(--black-suit);}
+  .btn{
+    display:block;
+    width:100%;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    margin-top:8px;
+  }
+  .btn-primary{background:var(--gold); color:#1a1a1a;}
+  .btn-secondary{background:#eee; color:#1a1a1a;}
+  .btn-ghost{background:transparent; color:rgba(255,255,255,0.8); text-decoration:underline; font-weight:500;}
+  .btn-danger{background:#fff; color:var(--lose); border:1.5px solid var(--lose);}
+  .name-input-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+    align-items:center;
+  }
+  .name-input-row input{flex:1;}
+  .name-input-row .num{
+    width:26px;
+    color:var(--muted);
+    font-weight:700;
+    font-size:14px;
+  }
+  table.scoreboard{
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+  }
+  table.scoreboard th{
+    text-align:left;
+    font-size:11px;
+    text-transform:uppercase;
+    color:var(--muted);
+    padding-bottom:6px;
+  }
+  table.scoreboard td{
+    padding:9px 4px;
+    border-top:1px solid #f0f0f0;
+  }
+  .rank-row.leader td{background:#eafaf0;}
+  .rank-row.last td{background:#fdecec;}
+  .player-cell{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-weight:600;
+  }
+  .deficit{
+    font-size:11px;
+    color:var(--muted);
+    font-weight:500;
+    display:block;
+  }
+  .made-star{color:var(--gold);}
+  .total-score{font-weight:800; font-size:15px;}
+  .overlay{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    z-index:10;
+  }
+  .modal{
+    background:#fff;
+    color:var(--card-ink);
+    border-radius:16px;
+    padding:20px;
+    max-width:440px;
+    width:100%;
+    max-height:88vh;
+    overflow-y:auto;
+  }
+  .modal h2{margin-top:0;}
+  .warn{
+    background:#fff4e0;
+    border:1px solid #f0c36d;
+    color:#8a5a00;
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    margin-bottom:12px;
+  }
+  .center{text-align:center;}
+  .trophy{font-size:56px; margin-bottom:6px;}
+  .winner-name{font-size:26px; font-weight:800; margin:4px 0;}
+  .winner-score{color:var(--muted); font-size:14px; margin-bottom:20px;}
+  .stepper-item-full{width:100%;}
+  .hidden{display:none;}
+  .trump-banner{
+    text-align:center;
+    background:rgba(232,185,35,0.18);
+    border:1px solid rgba(232,185,35,0.5);
+    color:#fff;
+    font-size:13px;
+    font-weight:600;
+    padding:7px 10px;
+    border-radius:10px;
+    margin:-8px 0 16px;
+  }
+  .trump-sym{
+    font-size:16px;
+    margin-left:2px;
+  }
+  .trump-sym.red{color:#ff8a80;}
+  .trump-sym.black{color:#fff;}
+  .setup-error{
+    background:#fdecec;
+    border:1px solid #f0b3b3;
+    color:#b93b3b;
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    margin-bottom:12px;
+  }
+  .footer-note{
+    text-align:center;
+    color:rgba(255,255,255,0.5);
+    font-size:11px;
+    margin-top:auto;
+    padding-top:24px;
+  }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+const SUITS = [
+  {sym:'♠', color:'black'},
+  {sym:'♥', color:'red'},
+  {sym:'♦', color:'red'},
+  {sym:'♣', color:'black'},
+];
+
+let state = null;
+
+function freshState(){
+  return {
+    phase: 'setup',
+    numPlayers: 4,
+    setupError: null,
+    playerNames: ['','','',''],
+    players: [], // {name, total, roundsHit}
+    round: 1,
+    direction: 'up',
+    maxCards: 13,
+    trump: null,
+    bids: [],
+    tricks: [],
+    history: [] // {round, trump, bids:[], tricks:[], roundScores:[]}
+  };
+}
+
+state = freshState();
+
+function el(html){
+  const t = document.createElement('template');
+  t.innerHTML = html.trim();
+  return t.content.firstChild;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  app.appendChild(header());
+  if(state.phase === 'setup') app.appendChild(setupScreen());
+  else if(state.phase === 'bid') app.appendChild(bidScreen());
+  else if(state.phase === 'tricks') app.appendChild(tricksScreen());
+  else if(state.phase === 'final') app.appendChild(finalScreen());
+  if(state.phase === 'roundComplete') app.appendChild(roundCompleteModal());
+  else if(state.phase !== 'setup' && state.phase !== 'final') {
+    // nothing extra
+  }
+  app.appendChild(footer());
+}
+
+function header(){
+  const wrap = el(`<div></div>`);
+  wrap.appendChild(el(`<h1><span class="suit">♠</span> Zilch <span class="suit">♥</span></h1>`));
+  let sub = 'Score keeper for the classic bidding trick game';
+  if(state.phase === 'bid' || state.phase === 'tricks' || state.phase === 'roundComplete'){
+    sub = `Round ${state.round} · ${state.round} card${state.round>1?'s':''} · ${state.direction === 'up' ? 'climbing' : 'heading down'}`;
+  }
+  wrap.appendChild(el(`<div class="subtitle">${sub}</div>`));
+  if((state.phase === 'tricks' || state.phase === 'roundComplete') && state.trump){
+    const suitInfo = SUITS.find(s => s.sym === state.trump);
+    wrap.appendChild(el(`
+      <div class="trump-banner">
+        Trump is <span class="trump-sym ${suitInfo.color}">${state.trump}</span>
+      </div>
+    `));
+  }
+  return wrap;
+}
+
+function footer(){
+  return el(`<div class="footer-note">MVP prototype · no data saved between sessions</div>`);
+}
+
+// ---------- SETUP ----------
+function setupScreen(){
+  const panel = el(`<div class="card-panel"></div>`);
+  panel.appendChild(el(`<label>Number of players</label>`));
+  const stepRow = el(`
+    <div class="stepper-row" style="border-bottom:none; padding-top:0;">
+      <div class="stepper">
+        <button id="npMinus">−</button>
+        <div class="val" id="npVal">${state.numPlayers}</div>
+        <button id="npPlus">+</button>
+      </div>
+    </div>
+  `);
+  panel.appendChild(stepRow);
+
+  const namesWrap = el(`<div class="field" style="margin-top:10px;"><label>Player names</label></div>`);
+  const namesList = el(`<div id="namesList"></div>`);
+  namesWrap.appendChild(namesList);
+  panel.appendChild(namesWrap);
+
+  renderNameInputs(namesList);
+
+  const errorSlot = el(`<div></div>`);
+  if(state.setupError){
+    errorSlot.appendChild(el(`<div class="setup-error">${state.setupError}</div>`));
+  }
+  panel.appendChild(errorSlot);
+
+  const startBtn = el(`<button class="btn btn-primary">Start Game</button>`);
+  startBtn.addEventListener('click', () => {
+    const names = state.playerNames.map((n,i) => n.trim() || `Player ${i+1}`);
+    const seen = new Set();
+    const dupes = new Set();
+    names.forEach(n => {
+      const key = n.toLowerCase();
+      if(seen.has(key)) dupes.add(n);
+      seen.add(key);
+    });
+    if(dupes.size > 0){
+      state.setupError = `Player names must be unique — "${[...dupes][0]}" is used more than once.`;
+      render();
+      return;
+    }
+    state.setupError = null;
+    state.players = names.map(name => ({name, total:0, roundsHit:0}));
+    state.maxCards = Math.floor(52 / state.numPlayers);
+    state.round = 1;
+    state.direction = 'up';
+    state.history = [];
+    startBidPhase();
+  });
+  panel.appendChild(startBtn);
+
+  panel.querySelector('#npMinus').addEventListener('click', () => adjustPlayerCount(-1, namesList));
+  panel.querySelector('#npPlus').addEventListener('click', () => adjustPlayerCount(1, namesList));
+
+  return panel;
+}
+
+function adjustPlayerCount(delta, namesList){
+  const next = state.numPlayers + delta;
+  if(next < 2 || next > 12) return;
+  state.numPlayers = next;
+  while(state.playerNames.length < state.numPlayers) state.playerNames.push('');
+  while(state.playerNames.length > state.numPlayers) state.playerNames.pop();
+  document.getElementById('npVal').textContent = state.numPlayers;
+  renderNameInputs(namesList);
+}
+
+function renderNameInputs(namesList){
+  namesList.innerHTML = '';
+  for(let i=0;i<state.numPlayers;i++){
+    const row = el(`
+      <div class="name-input-row">
+        <div class="num">${i+1}.</div>
+        <input type="text" placeholder="Player ${i+1}" value="${state.playerNames[i] || ''}">
+      </div>
+    `);
+    const input = row.querySelector('input');
+    input.addEventListener('input', (e) => { state.playerNames[i] = e.target.value; });
+    namesList.appendChild(row);
+  }
+}
+
+// ---------- BID PHASE ----------
+function startBidPhase(){
+  state.phase = 'bid';
+  state.trump = null;
+  state.bids = state.players.map(() => 0);
+  render();
+}
+
+function bidScreen(){
+  const panel = el(`<div class="card-panel"></div>`);
+
+  panel.appendChild(el(`<label>Trump suit (dealer's flip)</label>`));
+  const picker = el(`<div class="suit-picker"></div>`);
+  SUITS.forEach(s => {
+    const btn = el(`<button class="${s.color} ${state.trump===s.sym?'selected':''}">${s.sym}</button>`);
+    btn.addEventListener('click', () => { state.trump = s.sym; render(); });
+    picker.appendChild(btn);
+  });
+  panel.appendChild(picker);
+
+  panel.appendChild(el(`<label>Bids (0 to ${state.round})</label>`));
+  const list = el(`<div></div>`);
+  state.players.forEach((p, i) => {
+    const row = el(`
+      <div class="stepper-row">
+        <div class="stepper-name">${p.name}</div>
+        <div class="stepper">
+          <button data-i="${i}" class="bidMinus">−</button>
+          <div class="val">${state.bids[i]}</div>
+          <button data-i="${i}" class="bidPlus">+</button>
+        </div>
+      </div>
+    `);
+    list.appendChild(row);
+  });
+  panel.appendChild(list);
+
+  list.querySelectorAll('.bidMinus').forEach(b => b.addEventListener('click', (e) => {
+    const i = +e.target.dataset.i;
+    if(state.bids[i] > 0) state.bids[i]--;
+    render();
+  }));
+  list.querySelectorAll('.bidPlus').forEach(b => b.addEventListener('click', (e) => {
+    const i = +e.target.dataset.i;
+    if(state.bids[i] < state.round) state.bids[i]++;
+    render();
+  }));
+
+  const lockBtn = el(`<button class="btn btn-primary">Lock In Bids</button>`);
+  lockBtn.addEventListener('click', () => {
+    state.phase = 'tricks';
+    state.tricks = state.players.map(() => 0);
+    render();
+  });
+  panel.appendChild(lockBtn);
+
+  return panel;
+}
+
+// ---------- TRICKS PHASE ----------
+function tricksScreen(){
+  const panel = el(`<div class="card-panel"></div>`);
+
+  const sum = state.tricks.reduce((a,b) => a+b, 0);
+  const target = state.round;
+  const ok = sum === target;
+  panel.appendChild(el(`
+    <div class="warn" style="${ok ? 'background:#eafaf0;border-color:#bfe6cc;color:#1f8a4c;' : ''}">
+      Tricks entered: ${sum} / ${target} ${ok ? '✓ matches cards dealt' : '— should add up to ' + target}
+    </div>
+  `));
+
+  panel.appendChild(el(`<label>Tricks taken</label>`));
+  const list = el(`<div></div>`);
+  state.players.forEach((p, i) => {
+    const row = el(`
+      <div class="stepper-row">
+        <div class="stepper-name">${p.name}<span class="stepper-badge">bid ${state.bids[i]}</span></div>
+        <div class="stepper">
+          <button data-i="${i}" class="trMinus">−</button>
+          <div class="val">${state.tricks[i]}</div>
+          <button data-i="${i}" class="trPlus">+</button>
+        </div>
+      </div>
+    `);
+    list.appendChild(row);
+  });
+  panel.appendChild(list);
+
+  list.querySelectorAll('.trMinus').forEach(b => b.addEventListener('click', (e) => {
+    const i = +e.target.dataset.i;
+    if(state.tricks[i] > 0) state.tricks[i]--;
+    render();
+  }));
+  list.querySelectorAll('.trPlus').forEach(b => b.addEventListener('click', (e) => {
+    const i = +e.target.dataset.i;
+    if(state.tricks[i] < state.round) state.tricks[i]++;
+    render();
+  }));
+
+  const calcBtn = el(`<button class="btn btn-primary">Calculate Scores</button>`);
+  calcBtn.addEventListener('click', () => {
+    completeRound();
+  });
+  panel.appendChild(calcBtn);
+
+  return panel;
+}
+
+function completeRound(){
+  const roundScores = state.players.map((p, i) => {
+    const made = state.tricks[i] === state.bids[i];
+    const pts = state.tricks[i] + (made ? 10 : 0);
+    p.total += pts;
+    if(made) p.roundsHit++;
+    return pts;
+  });
+  state.history.push({
+    round: state.round,
+    trump: state.trump,
+    bids: [...state.bids],
+    tricks: [...state.tricks],
+    roundScores
+  });
+  state.phase = 'roundComplete';
+  render();
+}
+
+// ---------- ROUND COMPLETE ----------
+function roundCompleteModal(){
+  const overlay = el(`<div class="overlay"></div>`);
+  const modal = el(`<div class="modal"></div>`);
+  modal.appendChild(el(`<h2>Round ${state.round} complete</h2>`));
+
+  const last = state.history[state.history.length - 1];
+  const ranked = state.players.map((p, i) => ({...p, idx:i})).sort((a,b) => b.total - a.total);
+  const leaderTotal = ranked[0].total;
+
+  const table = el(`
+    <table class="scoreboard">
+      <thead>
+        <tr><th>Player</th><th>Bid</th><th>Won</th><th>Round</th><th>Total</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  `);
+  const tbody = table.querySelector('tbody');
+  ranked.forEach((p, rank) => {
+    const made = last.tricks[p.idx] === last.bids[p.idx];
+    const rowClass = rank === 0 ? 'leader' : (rank === ranked.length-1 ? 'last' : '');
+    const deficit = leaderTotal - p.total;
+    tbody.appendChild(el(`
+      <tr class="rank-row ${rowClass}">
+        <td>
+          <div class="player-cell">${made ? '<span class="made-star">★</span>' : ''}${p.name}</div>
+          ${deficit > 0 ? `<span class="deficit">${deficit} behind leader</span>` : ''}
+        </td>
+        <td>${last.bids[p.idx]}</td>
+        <td>${last.tricks[p.idx]}</td>
+        <td>+${last.roundScores[p.idx]}</td>
+        <td class="total-score">${p.total}</td>
+      </tr>
+    `));
+  });
+  modal.appendChild(table);
+
+  const btnWrap = el(`<div style="margin-top:16px;"></div>`);
+
+  const atMax = state.round >= state.maxCards && state.direction === 'up';
+  let nextLabel;
+  if(state.direction === 'up' && !atMax){
+    nextLabel = `Next Round (${state.round + 1} cards)`;
+  } else {
+    const upcoming = state.round - 1;
+    nextLabel = upcoming >= 1
+      ? `Next Round (${upcoming} card${upcoming===1?'':'s'})`
+      : `Finish Game`;
+  }
+
+  const nextBtn = el(`<button class="btn btn-primary">${nextLabel}</button>`);
+  nextBtn.addEventListener('click', () => proceedToNextRound(false));
+  btnWrap.appendChild(nextBtn);
+
+  if(state.direction === 'up' && !atMax){
+    const downBtn = el(`<button class="btn btn-secondary">Head Back Down Early</button>`);
+    downBtn.addEventListener('click', () => proceedToNextRound(true));
+    btnWrap.appendChild(downBtn);
+  }
+
+  const endBtn = el(`<button class="btn btn-danger">End Game Now</button>`);
+  endBtn.addEventListener('click', () => { state.phase = 'final'; render(); });
+  btnWrap.appendChild(endBtn);
+
+  modal.appendChild(btnWrap);
+  overlay.appendChild(modal);
+  return overlay;
+}
+
+function proceedToNextRound(headDownEarly){
+  if(headDownEarly) state.direction = 'down';
+
+  if(state.direction === 'up'){
+    if(state.round >= state.maxCards){
+      state.direction = 'down';
+      state.round -= 1;
+    } else {
+      state.round += 1;
+    }
+  } else {
+    state.round -= 1;
+  }
+
+  if(state.round < 1){
+    state.phase = 'final';
+    render();
+    return;
+  }
+  startBidPhase();
+}
+
+// ---------- FINAL ----------
+function finalScreen(){
+  const panel = el(`<div class="card-panel center"></div>`);
+  const ranked = [...state.players].sort((a,b) => b.total - a.total);
+  const winner = ranked[0];
+
+  panel.appendChild(el(`<div class="trophy">🏆</div>`));
+  panel.appendChild(el(`<div class="winner-name">${winner.name} wins!</div>`));
+  panel.appendChild(el(`<div class="winner-score">${winner.total} points</div>`));
+
+  const table = el(`
+    <table class="scoreboard" style="text-align:left;">
+      <thead><tr><th>Player</th><th>Bids hit</th><th>Total</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  `);
+  const tbody = table.querySelector('tbody');
+  ranked.forEach((p, i) => {
+    const rowClass = i === 0 ? 'leader' : (i === ranked.length-1 ? 'last' : '');
+    tbody.appendChild(el(`
+      <tr class="rank-row ${rowClass}">
+        <td>${p.name}</td>
+        <td>${p.roundsHit}</td>
+        <td class="total-score">${p.total}</td>
+      </tr>
+    `));
+  });
+  panel.appendChild(table);
+
+  const restartBtn = el(`<button class="btn btn-primary" style="margin-top:18px;">Start New Game</button>`);
+  restartBtn.addEventListener('click', () => { state = freshState(); render(); });
+  panel.appendChild(restartBtn);
+
+  return panel;
+}
+
+render();
+</script>
+</body>
+</html>
