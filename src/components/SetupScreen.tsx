@@ -15,6 +15,7 @@ type Props = {
 
 export default function SetupScreen({ onStart, starting, dbError }: Props) {
   const [knownPlayers, setKnownPlayers] = useState<Player[]>([]);
+  const [loadingPlayers, setLoadingPlayers] = useState(true);
   const [numPlayers, setNumPlayers] = useState(4);
   const [names, setNames] = useState<string[]>(["", "", "", ""]);
   const [textMode, setTextMode] = useState<boolean[]>([false, false, false, false]);
@@ -25,10 +26,12 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
       .then(setKnownPlayers)
       .catch(() => {
         // Non-fatal: setup still works via free-text entry, just no recent-player list.
-      });
+      })
+      .finally(() => setLoadingPlayers(false));
   }, []);
 
   const recentPlayers = knownPlayers.slice(0, RECENT_LIMIT);
+  const hasUnselectedSlot = names.some((n, i) => !textMode[i] && n === "");
 
   function adjustPlayerCount(delta: number) {
     const next = numPlayers + delta;
@@ -92,18 +95,18 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
       <label>Number of players</label>
       <div className="stepper-row" style={{ borderBottom: "none", paddingTop: 0 }}>
         <div className="stepper">
-          <button onClick={() => adjustPlayerCount(-1)} disabled={numPlayers <= 2}>
+          <button aria-label="Decrease number of players" onClick={() => adjustPlayerCount(-1)} disabled={numPlayers <= 2}>
             −
           </button>
           <div className="val">{numPlayers}</div>
-          <button onClick={() => adjustPlayerCount(1)} disabled={numPlayers >= 12}>
+          <button aria-label="Increase number of players" onClick={() => adjustPlayerCount(1)} disabled={numPlayers >= 12}>
             +
           </button>
         </div>
       </div>
 
       <div className="field" style={{ marginTop: 10 }}>
-        <label>Player names</label>
+        <label>Player names{loadingPlayers && <span style={{ fontWeight: 400, color: "var(--muted)" }}> · loading players…</span>}</label>
         <div>
           {names.map((name, i) => (
             <div className="name-input-row" key={i}>
@@ -146,11 +149,14 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
         </div>
       </div>
 
+      {hasUnselectedSlot && !validationError && !dbError && (
+        <div className="warn">Select a player (or add a new one) for every slot before starting.</div>
+      )}
       {(validationError || dbError) && (
         <div className="setup-error">{validationError || dbError}</div>
       )}
 
-      <button className="btn btn-primary" onClick={handleStart} disabled={starting}>
+      <button className="btn btn-primary" onClick={handleStart} disabled={starting || hasUnselectedSlot}>
         {starting ? "Starting…" : "Start Game"}
       </button>
       <Link href="/leaderboard" className="btn-ghost-on-light">
