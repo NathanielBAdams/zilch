@@ -11,6 +11,9 @@ type Props = {
   direction: Direction;
   onNextRound: (headDownEarly: boolean) => void;
   onEndGame: () => void;
+  onStartOver: () => void;
+  onEditRound: () => void;
+  onShowHistory: () => void;
 };
 
 export default function RoundCompleteModal({
@@ -21,9 +24,13 @@ export default function RoundCompleteModal({
   direction,
   onNextRound,
   onEndGame,
+  onStartOver,
+  onEditRound,
+  onShowHistory,
 }: Props) {
   const ranked = players.map((p, idx) => ({ ...p, idx })).sort((a, b) => b.total - a.total);
   const leaderTotal = ranked[0].total;
+  const lastTotal = ranked[ranked.length - 1].total;
   const atMax = round >= maxCards && direction === "up";
   const label = nextRoundLabel(round, maxCards, direction);
 
@@ -43,9 +50,9 @@ export default function RoundCompleteModal({
             </tr>
           </thead>
           <tbody>
-            {ranked.map((p, rank) => {
+            {ranked.map((p) => {
               const made = lastRound.tricks[p.idx] === lastRound.bids[p.idx];
-              const rowClass = rank === 0 ? "leader" : rank === ranked.length - 1 ? "last" : "";
+              const rowClass = p.total === leaderTotal ? "leader" : p.total === lastTotal ? "last" : "";
               const deficit = leaderTotal - p.total;
               return (
                 <tr className={`rank-row ${rowClass}`} key={p.id}>
@@ -77,6 +84,15 @@ export default function RoundCompleteModal({
           )}
           <button className="btn btn-danger" onClick={onEndGame}>
             End Game Now
+          </button>
+          <button className="btn-ghost-on-light" onClick={onEditRound}>
+            Edit This Round
+          </button>
+          <button className="btn-ghost-on-light" onClick={onShowHistory}>
+            History
+          </button>
+          <button className="btn-ghost-on-light" onClick={onStartOver}>
+            Start Over
           </button>
         </div>
       </div>

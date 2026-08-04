@@ -351,6 +351,17 @@ table.scoreboard td {
   margin-bottom: 12px;
 }
 
+.sync-banner {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  z-index: 20;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
 .center {
   text-align: center;
 }

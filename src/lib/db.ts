@@ -23,6 +23,24 @@ export async function fetchAllPlayers(): Promise<Player[]> {
   return data.map((row) => ({ id: row.player_id!, name: row.name! }));
 }
 
+/** Alphabetical listing for the player-management screen (easier to find a specific name than recency order). */
+export async function fetchAllPlayersAlphabetical(): Promise<Player[]> {
+  const { data, error } = await supabase.from("players").select("id, name").order("name");
+  if (error) throw error;
+  return data;
+}
+
+export async function renamePlayer(playerId: string, newName: string): Promise<void> {
+  const { error } = await supabase.from("players").update({ name: newName.trim() }).eq("id", playerId);
+  if (error) throw error;
+}
+
+/** Fails with a foreign-key error if the player has any game history — by design, callers should catch and explain. */
+export async function deletePlayer(playerId: string): Promise<void> {
+  const { error } = await supabase.from("players").delete().eq("id", playerId);
+  if (error) throw error;
+}
+
 /**
  * Looks up a player case-insensitively so "nate" and "Nate" resolve to the
  * same persistent profile instead of creating duplicates. Falls back to
@@ -81,13 +99,19 @@ export async function createGame(
   return game.id;
 }
 
+/** Removes a game abandoned before any round was recorded (e.g. via Start Over). */
+export async function deleteEmptyGame(gameId: string): Promise<void> {
+  const { error } = await supabase.from("games").delete().eq("id", gameId);
+  if (error) throw error;
+}
+
 export async function saveRoundResult(
   gameId: string,
   roundNumber: number,
   cardCount: number,
   trumpSuit: string | null,
   scores: RoundScoreInput[],
-): Promise<void> {
+): Promise<string> {
   const { data: round, error: roundError } = await supabase
     .from("rounds")
     .insert({ game_id: gameId, round_number: roundNumber, card_count: cardCount, trump_suit: trumpSuit })
@@ -105,6 +129,14 @@ export async function saveRoundResult(
     })),
   );
   if (scoresError) throw scoresError;
+
+  return round.id;
+}
+
+/** Undoes a synced round (used by "Edit This Round"); cascades to its round_scores. */
+export async function deleteRoundById(roundId: string): Promise<void> {
+  const { error } = await supabase.from("rounds").delete().eq("id", roundId);
+  if (error) throw error;
 }
 
 export async function finalizeGame(

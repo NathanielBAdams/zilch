@@ -9,10 +9,20 @@ type Props = {
   round: number;
   direction: Direction;
   trump: Suit | null;
+  historyCount: number;
   onStartOver: () => void;
+  onShowHistory: () => void;
 };
 
-export default function GameHeader({ phase, round, direction, trump, onStartOver }: Props) {
+export default function GameHeader({
+  phase,
+  round,
+  direction,
+  trump,
+  historyCount,
+  onStartOver,
+  onShowHistory,
+}: Props) {
   const inActiveGame = phase === "bid" || phase === "tricks" || phase === "roundComplete";
   const showTrumpBanner = (phase === "tricks" || phase === "roundComplete") && trump;
 
@@ -31,6 +41,11 @@ export default function GameHeader({ phase, round, direction, trump, onStartOver
         <div className="trump-banner">
           Trump is <span className={`trump-sym ${suitColor(trump)}`}>{trump}</span>
         </div>
+      )}
+      {inActiveGame && historyCount > 0 && (
+        <button className="btn btn-ghost" style={{ marginTop: 0 }} onClick={onShowHistory}>
+          History
+        </button>
       )}
       {inActiveGame && (
         <button className="btn btn-ghost" style={{ marginTop: 0 }} onClick={onStartOver}>

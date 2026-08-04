@@ -13,6 +13,7 @@ export type RoundHistoryEntry = {
   bids: number[];
   tricks: number[];
   roundScores: number[];
+  roundId?: string;
 };
 
 export type Phase = "setup" | "bid" | "tricks" | "roundComplete" | "final";
@@ -28,7 +29,6 @@ export type GameState = {
   bids: number[];
   tricks: number[];
   history: RoundHistoryEntry[];
-  syncIssue: boolean;
 };
 
 export function freshGameState(): GameState {
@@ -43,6 +43,5 @@ export function freshGameState(): GameState {
     bids: [],
     tricks: [],
     history: [],
-    syncIssue: false,
   };
 }
