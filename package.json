@@ -12,17 +12,19 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "react": "^18",
-    "react-dom": "^18",
+    "@supabase/supabase-js": "^2",
+    "canvas-confetti": "^1.9.4",
     "next": "15.5.22",
-    "@supabase/supabase-js": "^2"
+    "react": "^18",
+    "react-dom": "^18"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "eslint-config-next": "15.5.22"
+    "eslint-config-next": "15.5.22",
+    "typescript": "^5"
   }
 }

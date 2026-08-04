@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import confetti from "canvas-confetti";
 import type { GamePlayer } from "@/lib/types";
 
 type Props = {
@@ -7,9 +9,20 @@ type Props = {
   onStartNew: () => void;
 };
 
+const CONFETTI_COLORS = ["#e8b923", "#1f8a4c", "#ffffff"];
+
 export default function FinalScreen({ players, onStartNew }: Props) {
   const ranked = [...players].sort((a, b) => b.total - a.total);
   const winner = ranked[0];
+
+  useEffect(() => {
+    const shared = { colors: CONFETTI_COLORS, origin: { y: 0.6 } };
+    confetti({ ...shared, particleCount: 50, spread: 26, startVelocity: 55 });
+    confetti({ ...shared, particleCount: 40, spread: 60 });
+    confetti({ ...shared, particleCount: 70, spread: 100, decay: 0.91, scalar: 0.8 });
+    confetti({ ...shared, particleCount: 20, spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+    confetti({ ...shared, particleCount: 20, spread: 120, startVelocity: 45 });
+  }, []);
 
   return (
     <div className="card-panel center">
