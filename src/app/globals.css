@@ -102,6 +102,36 @@ input[type="number"] {
   font-size: 16px;
 }
 
+select {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  border: 1.5px solid #d8d8d8;
+  border-radius: 10px;
+  font-size: 16px;
+  color: var(--card-ink);
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.name-mode-toggle {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  flex: none;
+  border-radius: 8px;
+  border: 1.5px solid #d8d8d8;
+  background: #fafafa;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+
 .stepper-row {
   display: flex;
   align-items: center;
@@ -232,8 +262,10 @@ input[type="number"] {
   margin-bottom: 8px;
   align-items: center;
 }
-.name-input-row input {
+.name-input-row input,
+.name-input-row select {
   flex: 1;
+  min-width: 0;
 }
 .name-input-row .num {
   width: 26px;

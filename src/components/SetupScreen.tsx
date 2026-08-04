@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { fetchAllPlayers, type Player } from "@/lib/db";
 
+const ADD_NEW = "__new__";
+const RECENT_LIMIT = 10;
+
 type Props = {
   onStart: (names: string[]) => void;
   starting: boolean;
@@ -14,15 +17,18 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
   const [knownPlayers, setKnownPlayers] = useState<Player[]>([]);
   const [numPlayers, setNumPlayers] = useState(4);
   const [names, setNames] = useState<string[]>(["", "", "", ""]);
+  const [textMode, setTextMode] = useState<boolean[]>([false, false, false, false]);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAllPlayers()
       .then(setKnownPlayers)
       .catch(() => {
-        // Non-fatal: setup still works with free-text names, just no autocomplete.
+        // Non-fatal: setup still works via free-text entry, just no recent-player list.
       });
   }, []);
+
+  const recentPlayers = knownPlayers.slice(0, RECENT_LIMIT);
 
   function adjustPlayerCount(delta: number) {
     const next = numPlayers + delta;
@@ -34,6 +40,12 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
       while (copy.length > next) copy.pop();
       return copy;
     });
+    setTextMode((prev) => {
+      const copy = [...prev];
+      while (copy.length < next) copy.push(false);
+      while (copy.length > next) copy.pop();
+      return copy;
+    });
   }
 
   function handleNameChange(i: number, value: string) {
@@ -42,6 +54,20 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
       copy[i] = value;
       return copy;
     });
+  }
+
+  function handleSelectChange(i: number, value: string) {
+    if (value === ADD_NEW) {
+      setTextMode((prev) => prev.map((v, idx) => (idx === i ? true : v)));
+      handleNameChange(i, "");
+    } else {
+      handleNameChange(i, value);
+    }
+  }
+
+  function handleChooseExisting(i: number) {
+    setTextMode((prev) => prev.map((v, idx) => (idx === i ? false : v)));
+    handleNameChange(i, "");
   }
 
   function handleStart() {
@@ -63,12 +89,6 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
 
   return (
     <div className="card-panel">
-      <datalist id="known-players">
-        {knownPlayers.map((p) => (
-          <option key={p.id} value={p.name} />
-        ))}
-      </datalist>
-
       <label>Number of players</label>
       <div className="stepper-row" style={{ borderBottom: "none", paddingTop: 0 }}>
         <div className="stepper">
@@ -88,13 +108,39 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
           {names.map((name, i) => (
             <div className="name-input-row" key={i}>
               <div className="num">{i + 1}.</div>
-              <input
-                type="text"
-                list="known-players"
-                placeholder={`Player ${i + 1}`}
-                value={name}
-                onChange={(e) => handleNameChange(i, e.target.value)}
-              />
+              {textMode[i] ? (
+                <>
+                  <input
+                    type="text"
+                    placeholder={`Player ${i + 1}`}
+                    value={name}
+                    onChange={(e) => handleNameChange(i, e.target.value)}
+                    autoFocus
+                  />
+                  {knownPlayers.length > 0 && (
+                    <button
+                      type="button"
+                      className="name-mode-toggle"
+                      onClick={() => handleChooseExisting(i)}
+                      aria-label="Choose an existing player instead"
+                    >
+                      ↩
+                    </button>
+                  )}
+                </>
+              ) : (
+                <select value={name} onChange={(e) => handleSelectChange(i, e.target.value)}>
+                  <option value="" disabled>
+                    Select player
+                  </option>
+                  {recentPlayers.map((p) => (
+                    <option key={p.id} value={p.name}>
+                      {p.name}
+                    </option>
+                  ))}
+                  <option value={ADD_NEW}>+ Add new player</option>
+                </select>
+              )}
             </div>
           ))}
         </div>
