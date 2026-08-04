@@ -47,7 +47,8 @@ export default function BidScreen({ players, round, trump, bids, onTrumpChange, 
         ))}
       </div>
 
-      <button className="btn btn-primary" onClick={onLockIn}>
+      {!trump && <div className="warn">Pick the trump suit before locking in bids.</div>}
+      <button className="btn btn-primary" onClick={onLockIn} disabled={!trump}>
         Lock In Bids
       </button>
     </div>

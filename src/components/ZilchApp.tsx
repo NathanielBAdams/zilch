@@ -15,6 +15,7 @@ export default function ZilchApp() {
   const [state, setState] = useState<GameState>(() => freshGameState());
   const [starting, setStarting] = useState(false);
   const [dbError, setDbError] = useState<string | null>(null);
+  const [confirmingStartOver, setConfirmingStartOver] = useState(false);
 
   async function handleStart(names: string[]) {
     setStarting(true);
@@ -138,7 +139,11 @@ export default function ZilchApp() {
   }
 
   function handleStartOver() {
-    if (!window.confirm("Start over? This abandons the current game.")) return;
+    setConfirmingStartOver(true);
+  }
+
+  function confirmStartOver() {
+    setConfirmingStartOver(false);
     setState(freshGameState());
     setDbError(null);
   }
@@ -199,6 +204,21 @@ export default function ZilchApp() {
       )}
 
       {state.phase === "final" && <FinalScreen players={state.players} onStartNew={handleStartNew} />}
+
+      {confirmingStartOver && (
+        <div className="overlay">
+          <div className="modal">
+            <h2>Start over?</h2>
+            <p>This abandons the current game. The scores already saved won&apos;t be affected.</p>
+            <button className="btn btn-danger" onClick={confirmStartOver}>
+              Yes, Start Over
+            </button>
+            <button className="btn btn-secondary" onClick={() => setConfirmingStartOver(false)}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {state.syncIssue && (
         <div className="warn" style={{ marginTop: 12 }}>
