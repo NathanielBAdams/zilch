@@ -13,7 +13,10 @@ const CONFETTI_COLORS = ["#e8b923", "#1f8a4c", "#ffffff"];
 
 export default function FinalScreen({ players, onStartNew }: Props) {
   const ranked = [...players].sort((a, b) => b.total - a.total);
-  const winner = ranked[0];
+  const topScore = ranked[0].total;
+  const lastScore = ranked[ranked.length - 1].total;
+  const winners = ranked.filter((p) => p.total === topScore);
+  const isTie = winners.length > 1;
 
   useEffect(() => {
     const shared = { colors: CONFETTI_COLORS, origin: { y: 0.6 } };
@@ -27,8 +30,19 @@ export default function FinalScreen({ players, onStartNew }: Props) {
   return (
     <div className="card-panel center">
       <div className="trophy">🏆</div>
-      <div className="winner-name">{winner.name} wins!</div>
-      <div className="winner-score">{winner.total} points</div>
+      {isTie ? (
+        <>
+          <div className="winner-name">It&apos;s a tie!</div>
+          <div className="winner-score">
+            {winners.map((w) => w.name).join(" & ")} — {topScore} points
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="winner-name">{winners[0].name} wins!</div>
+          <div className="winner-score">{topScore} points</div>
+        </>
+      )}
 
       <table className="scoreboard" style={{ textAlign: "left" }}>
         <thead>
@@ -39,8 +53,8 @@ export default function FinalScreen({ players, onStartNew }: Props) {
           </tr>
         </thead>
         <tbody>
-          {ranked.map((p, i) => {
-            const rowClass = i === 0 ? "leader" : i === ranked.length - 1 ? "last" : "";
+          {ranked.map((p) => {
+            const rowClass = p.total === topScore ? "leader" : p.total === lastScore ? "last" : "";
             return (
               <tr className={`rank-row ${rowClass}`} key={p.id}>
                 <td>{p.name}</td>
