@@ -187,11 +187,12 @@ select {
 }
 .suit-picker button {
   flex: 1;
-  padding: 12px 0;
-  border-radius: 10px;
+  padding: 18px 0;
+  border-radius: 12px;
   border: 2px solid #e0e0e0;
   background: #fafafa;
-  font-size: 22px;
+  font-size: 38px;
+  line-height: 1;
   cursor: pointer;
 }
 .suit-picker button.selected {
@@ -372,19 +373,24 @@ table.scoreboard td {
 }
 
 .trump-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   text-align: center;
   background: rgba(232, 185, 35, 0.18);
   border: 1px solid rgba(232, 185, 35, 0.5);
   color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 7px 10px;
-  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 16px;
+  border-radius: 14px;
   margin: -8px 0 16px;
 }
 .trump-sym {
-  font-size: 16px;
-  margin-left: 2px;
+  font-size: 44px;
+  line-height: 1;
+  margin-left: 0;
 }
 .trump-sym.red {
   color: #ff8a80;
