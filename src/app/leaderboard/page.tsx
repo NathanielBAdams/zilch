@@ -79,6 +79,10 @@ export default function LeaderboardPage() {
         </div>
       )}
 
+      <Link href="/players" className="btn btn-ghost">
+        ⚙️ Manage Players
+      </Link>
+
       <div className="footer-note">Zilch Scorekeeper</div>
     </div>
   );
