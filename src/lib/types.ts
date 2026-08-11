@@ -1,4 +1,5 @@
 import type { Direction, Suit } from "./gameLogic";
+import type { RoundScoreInput } from "./db";
 
 export type GamePlayer = {
   id: string;
@@ -48,3 +49,27 @@ export function freshGameState(): GameState {
     history: [],
   };
 }
+
+export type PendingRoundSave = {
+  localId: string;
+  historyIndex: number;
+  gameId: string;
+  roundNumber: number;
+  cardCount: number;
+  trumpSuit: Suit | null;
+  scores: RoundScoreInput[];
+  /** Present when this save is overwriting an already-synced round rather than inserting a new one. */
+  roundId: string | null;
+};
+
+export type EditingRound = {
+  historyIndex: number;
+  /** The round exactly as it was before editing began, so Cancel can restore it verbatim with no network call. */
+  original: RoundHistoryEntry;
+};
+
+export type PendingFinalize = {
+  gameId: string;
+  winnerId: string;
+  finalTotals: { playerId: string; total: number }[];
+};

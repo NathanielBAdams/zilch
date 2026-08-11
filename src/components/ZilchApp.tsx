@@ -1,41 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { freshGameState, type GameState, type RoundHistoryEntry } from "@/lib/types";
-import { maxCardsFor, nextRoundInfo, scoreForRound, hitBid, type Suit } from "@/lib/gameLogic";
+import { useEffect, useState } from "react";
 import {
-  findOrCreatePlayer,
-  createGame,
-  saveRoundResult,
-  updateRoundResult,
-  finalizeGame,
-  deleteEmptyGame,
-  type RoundScoreInput,
-} from "@/lib/db";
-
-type PendingRoundSave = {
-  localId: string;
-  historyIndex: number;
-  gameId: string;
-  roundNumber: number;
-  cardCount: number;
-  trumpSuit: Suit | null;
-  scores: RoundScoreInput[];
-  /** Present when this save is overwriting an already-synced round rather than inserting a new one. */
-  roundId: string | null;
-};
-
-type EditingRound = {
-  historyIndex: number;
-  /** The round exactly as it was before editing began, so Cancel can restore it verbatim with no network call. */
-  original: RoundHistoryEntry;
-};
-
-type PendingFinalize = {
-  gameId: string;
-  winnerId: string;
-  finalTotals: { playerId: string; total: number }[];
-};
+  freshGameState,
+  type GameState,
+  type RoundHistoryEntry,
+  type PendingRoundSave,
+  type EditingRound,
+  type PendingFinalize,
+} from "@/lib/types";
+import { maxCardsFor, nextRoundInfo, scoreForRound, hitBid, type Suit } from "@/lib/gameLogic";
+import { findOrCreatePlayer, createGame, saveRoundResult, updateRoundResult, finalizeGame, deleteEmptyGame } from "@/lib/db";
+import { loadPersistedGame, savePersistedGame, clearPersistedGame } from "@/lib/persistence";
 import GameHeader from "./GameHeader";
 import OfflineBanner from "./OfflineBanner";
 import SetupScreen from "./SetupScreen";
@@ -58,6 +34,37 @@ export default function ZilchApp() {
   const [failedFinalize, setFailedFinalize] = useState<PendingFinalize | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [editingRound, setEditingRound] = useState<EditingRound | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+
+  // localStorage isn't available during SSR, so the resume has to happen in an
+  // effect (after hydration) rather than in a useState initializer — reading it
+  // up front would make the very first client render disagree with the
+  // server-rendered HTML and trip a hydration mismatch.
+  useEffect(() => {
+    const resumed = loadPersistedGame();
+    if (resumed) {
+      setState(resumed.state);
+      setEditingRound(resumed.editingRound);
+      setFailedSaves(resumed.failedSaves);
+      setFailedFinalize(resumed.failedFinalize);
+    }
+    setHydrated(true);
+  }, []);
+
+  // Keep the in-progress game recoverable across a reload/closed tab. Nothing
+  // to resume once a game hasn't started yet or has already finished, so the
+  // storage entry is cleared rather than left stale in those phases. Gated on
+  // `hydrated` so this can't run before the resume effect above has had a
+  // chance to read the existing entry — otherwise the first render's fresh
+  // (pre-resume) "setup" state would wipe it out from under that read.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (state.phase === "setup" || state.phase === "final") {
+      clearPersistedGame();
+    } else {
+      savePersistedGame({ state, editingRound, failedSaves, failedFinalize });
+    }
+  }, [hydrated, state, editingRound, failedSaves, failedFinalize]);
 
   async function handleStart(names: string[]) {
     setStarting(true);
