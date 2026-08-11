@@ -9,9 +9,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "cap:sync": "cap sync ios",
+    "cap:open": "cap open ios"
   },
   "dependencies": {
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0",
     "@supabase/supabase-js": "^2",
     "canvas-confetti": "^1.9.4",
     "next": "15.5.22",
@@ -19,6 +23,7 @@
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^22",
     "@types/react": "^18",
