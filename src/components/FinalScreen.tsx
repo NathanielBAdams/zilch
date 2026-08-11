@@ -1,17 +1,20 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import confetti from "canvas-confetti";
-import type { GamePlayer } from "@/lib/types";
+import type { GamePlayer, RoundHistoryEntry } from "@/lib/types";
+import { buildShareRecap, shareRecap } from "@/lib/recap";
 
 type Props = {
   players: GamePlayer[];
+  history: RoundHistoryEntry[];
   onStartNew: () => void;
 };
 
 const CONFETTI_COLORS = ["#e8b923", "#1f8a4c", "#ffffff"];
 
-export default function FinalScreen({ players, onStartNew }: Props) {
+export default function FinalScreen({ players, history, onStartNew }: Props) {
+  const [shareState, setShareState] = useState<"idle" | "copied" | "failed">("idle");
   const ranked = [...players].sort((a, b) => b.total - a.total);
   const topScore = ranked[0].total;
   const lastScore = ranked[ranked.length - 1].total;
@@ -66,7 +69,20 @@ export default function FinalScreen({ players, onStartNew }: Props) {
         </tbody>
       </table>
 
-      <button className="btn btn-primary" style={{ marginTop: 18 }} onClick={onStartNew}>
+      <button
+        className="btn btn-secondary"
+        style={{ marginTop: 18 }}
+        onClick={async () => {
+          const result = await shareRecap(buildShareRecap(players, history));
+          if (result === "shared") return;
+          setShareState(result === "copied" ? "copied" : "failed");
+          setTimeout(() => setShareState("idle"), 2500);
+        }}
+      >
+        {shareState === "copied" ? "✓ Copied to clipboard" : shareState === "failed" ? "Couldn't share — try again" : "📤 Share Recap"}
+      </button>
+
+      <button className="btn btn-primary" onClick={onStartNew}>
         Start New Game
       </button>
     </div>

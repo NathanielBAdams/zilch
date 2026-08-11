@@ -425,7 +425,9 @@ export default function ZilchApp() {
         <HistoryModal players={state.players} history={state.history} onClose={() => setShowHistory(false)} />
       )}
 
-      {state.phase === "final" && <FinalScreen players={state.players} onStartNew={handleStartNew} />}
+      {state.phase === "final" && (
+        <FinalScreen players={state.players} history={state.history} onStartNew={handleStartNew} />
+      )}
 
       {pendingConfirm && (
         <div className="overlay">
