@@ -20,7 +20,7 @@ export default function TricksScreen({ players, round, bids, tricks, onTrickChan
   return (
     <div className="card-panel">
       <div className="warn" style={ok ? { background: "#eafaf0", borderColor: "#bfe6cc", color: "#1f8a4c" } : undefined}>
-        Tricks entered: {sum} / {round} {ok ? "✓ matches cards dealt" : `— should add up to ${round}`}
+        Tricks entered: {sum} / {round} {ok ? "✓ matches cards dealt" : `— must add up to exactly ${round} to continue`}
       </div>
 
       <label>Tricks taken</label>
@@ -52,7 +52,7 @@ export default function TricksScreen({ players, round, bids, tricks, onTrickChan
         ))}
       </div>
 
-      <button className="btn btn-primary" onClick={onCalculate}>
+      <button className="btn btn-primary" onClick={onCalculate} disabled={!ok}>
         Calculate Scores
       </button>
     </div>
