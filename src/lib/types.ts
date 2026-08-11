@@ -14,6 +14,9 @@ export type RoundHistoryEntry = {
   tricks: number[];
   roundScores: number[];
   roundId?: string;
+  /** Client-only identity for this specific calculation, so a stale async save
+   * from a since-superseded edit can never overwrite the wrong history entry. */
+  localId: string;
 };
 
 export type Phase = "setup" | "bid" | "tricks" | "roundComplete" | "final";

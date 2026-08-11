@@ -1,25 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { freshGameState, type GameState } from "@/lib/types";
+import { freshGameState, type GameState, type RoundHistoryEntry } from "@/lib/types";
 import { maxCardsFor, nextRoundInfo, scoreForRound, hitBid, type Suit } from "@/lib/gameLogic";
 import {
   findOrCreatePlayer,
   createGame,
   saveRoundResult,
+  updateRoundResult,
   finalizeGame,
   deleteEmptyGame,
-  deleteRoundById,
   type RoundScoreInput,
 } from "@/lib/db";
 
 type PendingRoundSave = {
+  localId: string;
   historyIndex: number;
   gameId: string;
   roundNumber: number;
   cardCount: number;
   trumpSuit: Suit | null;
   scores: RoundScoreInput[];
+  /** Present when this save is overwriting an already-synced round rather than inserting a new one. */
+  roundId: string | null;
+};
+
+type EditingRound = {
+  historyIndex: number;
+  /** The round exactly as it was before editing began, so Cancel can restore it verbatim with no network call. */
+  original: RoundHistoryEntry;
 };
 
 type PendingFinalize = {
@@ -48,6 +57,7 @@ export default function ZilchApp() {
   const [failedSaves, setFailedSaves] = useState<PendingRoundSave[]>([]);
   const [failedFinalize, setFailedFinalize] = useState<PendingFinalize | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [editingRound, setEditingRound] = useState<EditingRound | null>(null);
 
   async function handleStart(names: string[]) {
     setStarting(true);
@@ -66,6 +76,7 @@ export default function ZilchApp() {
         maxCards,
         players: resolved.map((p) => ({ id: p.id, name: p.name, total: 0, roundsHit: 0 })),
         bids: resolved.map(() => 0),
+        tricks: resolved.map(() => 0),
       });
     } catch {
       setDbError("Couldn't start the game — check your connection and try again.");
@@ -87,7 +98,7 @@ export default function ZilchApp() {
   }
 
   function handleLockIn() {
-    setState((prev) => ({ ...prev, phase: "tricks", tricks: prev.players.map(() => 0) }));
+    setState((prev) => ({ ...prev, phase: "tricks" }));
   }
 
   function handleTrickChange(index: number, value: number) {
@@ -105,14 +116,18 @@ export default function ZilchApp() {
       total: p.total + roundScores[i],
       roundsHit: p.roundsHit + (hitBid(state.bids[i], state.tricks[i]) ? 1 : 0),
     }));
-    const historyEntry = {
+    const localId = crypto.randomUUID();
+    const overwritingRoundId = editingRound?.original.roundId ?? null;
+    const historyEntry: RoundHistoryEntry = {
       round: state.round,
       trump: state.trump,
       bids: [...state.bids],
       tricks: [...state.tricks],
       roundScores,
+      roundId: overwritingRoundId ?? undefined,
+      localId,
     };
-    const historyIndex = state.history.length;
+    const historyIndex = editingRound?.historyIndex ?? state.history.length;
 
     setState((prev) => ({
       ...prev,
@@ -120,6 +135,7 @@ export default function ZilchApp() {
       history: [...prev.history, historyEntry],
       phase: "roundComplete",
     }));
+    setEditingRound(null);
 
     if (state.gameId) {
       const gameId = state.gameId;
@@ -130,18 +146,33 @@ export default function ZilchApp() {
         tricksTaken: state.tricks[i],
         points: roundScores[i],
       }));
-      saveRoundResult(gameId, roundNumber, state.round, state.trump, scores)
+
+      const persist = overwritingRoundId
+        ? updateRoundResult(overwritingRoundId, state.trump, scores).then(() => overwritingRoundId)
+        : saveRoundResult(gameId, roundNumber, state.round, state.trump, scores);
+
+      persist
         .then((roundId) => {
           setState((s) => {
             const history = [...s.history];
-            if (history[historyIndex]) history[historyIndex] = { ...history[historyIndex], roundId };
+            const idx = history.findIndex((h) => h.localId === localId);
+            if (idx !== -1) history[idx] = { ...history[idx], roundId };
             return { ...s, history };
           });
         })
         .catch(() => {
           setFailedSaves((prev) => [
             ...prev,
-            { historyIndex, gameId, roundNumber, cardCount: state.round, trumpSuit: state.trump, scores },
+            {
+              localId,
+              historyIndex,
+              gameId,
+              roundNumber,
+              cardCount: state.round,
+              trumpSuit: state.trump,
+              scores,
+              roundId: overwritingRoundId,
+            },
           ]);
         });
     }
@@ -151,9 +182,12 @@ export default function ZilchApp() {
     const lastRound = state.history[state.history.length - 1];
     if (!lastRound) return;
 
-    if (lastRound.roundId) {
-      deleteRoundById(lastRound.roundId).catch(() => {});
-    }
+    const historyIndex = state.history.length - 1;
+
+    // Drop any not-yet-synced save for this round — otherwise a later "Retry
+    // Sync" could resurrect the pre-edit numbers as a duplicate round.
+    setFailedSaves((prev) => prev.filter((s) => s.historyIndex !== historyIndex));
+    setEditingRound({ historyIndex, original: lastRound });
 
     setState((prev) => {
       const revertedPlayers = prev.players.map((p, i) => ({
@@ -165,10 +199,36 @@ export default function ZilchApp() {
         ...prev,
         players: revertedPlayers,
         history: prev.history.slice(0, -1),
-        phase: "tricks",
+        phase: "bid",
+        trump: lastRound.trump,
+        bids: [...lastRound.bids],
         tricks: [...lastRound.tricks],
       };
     });
+  }
+
+  /** Backs out of an in-progress edit and restores the round exactly as it was — purely local, no network call. */
+  function handleCancelEdit() {
+    if (!editingRound) return;
+    const { original } = editingRound;
+
+    setState((prev) => {
+      const restoredPlayers = prev.players.map((p, i) => ({
+        ...p,
+        total: p.total + original.roundScores[i],
+        roundsHit: p.roundsHit + (hitBid(original.bids[i], original.tricks[i]) ? 1 : 0),
+      }));
+      return {
+        ...prev,
+        players: restoredPlayers,
+        history: [...prev.history, original],
+        phase: "roundComplete",
+        trump: original.trump,
+        bids: [...original.bids],
+        tricks: [...original.tricks],
+      };
+    });
+    setEditingRound(null);
   }
 
   function finishGame(finalPlayers: GameState["players"], gameId: string | null) {
@@ -195,6 +255,7 @@ export default function ZilchApp() {
       direction: info.direction,
       trump: null,
       bids: prev.players.map(() => 0),
+      tricks: prev.players.map(() => 0),
     }));
   }
 
@@ -226,7 +287,10 @@ export default function ZilchApp() {
       title: "Start over?",
       message: "This abandons the current game. The scores already saved won't be affected.",
       onConfirm: () => {
-        if (state.gameId && state.history.length === 0) {
+        // editingRound means the only played round is transiently popped out of
+        // history for editing — the game is not actually empty, and deleting it
+        // would cascade-delete that already-synced round.
+        if (state.gameId && state.history.length === 0 && !editingRound) {
           deleteEmptyGame(state.gameId).catch(() => {});
         }
         setState(freshGameState());
@@ -234,6 +298,7 @@ export default function ZilchApp() {
         setFailedSaves([]);
         setFailedFinalize(null);
         setShowHistory(false);
+        setEditingRound(null);
       },
     });
   }
@@ -244,16 +309,20 @@ export default function ZilchApp() {
     setFailedSaves([]);
     setFailedFinalize(null);
     setShowHistory(false);
+    setEditingRound(null);
   }
 
   async function handleRetrySync() {
     for (const save of failedSaves) {
       try {
-        const roundId = await saveRoundResult(save.gameId, save.roundNumber, save.cardCount, save.trumpSuit, save.scores);
+        const roundId = save.roundId
+          ? await updateRoundResult(save.roundId, save.trumpSuit, save.scores).then(() => save.roundId as string)
+          : await saveRoundResult(save.gameId, save.roundNumber, save.cardCount, save.trumpSuit, save.scores);
         setFailedSaves((prev) => prev.filter((s) => s !== save));
         setState((s) => {
           const history = [...s.history];
-          if (history[save.historyIndex]) history[save.historyIndex] = { ...history[save.historyIndex], roundId };
+          const idx = history.findIndex((h) => h.localId === save.localId);
+          if (idx !== -1) history[idx] = { ...history[idx], roundId };
           return { ...s, history };
         });
       } catch {
@@ -286,6 +355,15 @@ export default function ZilchApp() {
       />
 
       <OfflineBanner />
+
+      {editingRound && (state.phase === "bid" || state.phase === "tricks") && (
+        <div className="edit-round-banner">
+          <span>✏️ Editing Round {editingRound.historyIndex + 1}</span>
+          <button className="btn-ghost-on-light" style={{ margin: 0, padding: 0 }} onClick={handleCancelEdit}>
+            Cancel Edit
+          </button>
+        </div>
+      )}
 
       {state.phase === "setup" && <SetupScreen onStart={handleStart} starting={starting} dbError={dbError} />}
 

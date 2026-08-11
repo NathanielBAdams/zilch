@@ -133,10 +133,30 @@ export async function saveRoundResult(
   return round.id;
 }
 
-/** Undoes a synced round (used by "Edit This Round"); cascades to its round_scores. */
-export async function deleteRoundById(roundId: string): Promise<void> {
-  const { error } = await supabase.from("rounds").delete().eq("id", roundId);
-  if (error) throw error;
+/**
+ * Overwrites an already-synced round in place (used by "Edit This Round").
+ * Keeps the same round id rather than delete-then-reinsert, so a save that
+ * fails partway never leaves the round missing from the game's history.
+ */
+export async function updateRoundResult(
+  roundId: string,
+  trumpSuit: string | null,
+  scores: RoundScoreInput[],
+): Promise<void> {
+  const { error: roundError } = await supabase.from("rounds").update({ trump_suit: trumpSuit }).eq("id", roundId);
+  if (roundError) throw roundError;
+
+  const { error: scoresError } = await supabase.from("round_scores").upsert(
+    scores.map((s) => ({
+      round_id: roundId,
+      player_id: s.playerId,
+      bid: s.bid,
+      tricks_taken: s.tricksTaken,
+      points: s.points,
+    })),
+    { onConflict: "round_id,player_id" },
+  );
+  if (scoresError) throw scoresError;
 }
 
 export async function finalizeGame(
