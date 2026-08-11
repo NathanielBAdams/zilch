@@ -10,15 +10,21 @@ type Props = {
   round: number;
   trump: Suit | null;
   bids: number[];
+  dealerName?: string;
   onTrumpChange: (suit: Suit) => void;
   onBidChange: (index: number, value: number) => void;
   onLockIn: () => void;
 };
 
-export default function BidScreen({ players, round, trump, bids, onTrumpChange, onBidChange, onLockIn }: Props) {
+export default function BidScreen({ players, round, trump, bids, dealerName, onTrumpChange, onBidChange, onLockIn }: Props) {
   return (
     <div className="card-panel">
-      <label>Trump suit (dealer&apos;s flip)</label>
+      <label>Trump suit {dealerName ? <>({dealerName}&apos;s flip)</> : <>(dealer&apos;s flip)</>}</label>
+      {dealerName && (
+        <div className="dealer-indicator">
+          🃏 <strong>{dealerName}</strong> is dealing this round
+        </div>
+      )}
       <div className="suit-picker">
         {SUITS.map((s) => (
           <button

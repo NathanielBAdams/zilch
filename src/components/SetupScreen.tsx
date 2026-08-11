@@ -73,6 +73,18 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
     handleNameChange(i, "");
   }
 
+  function moveSlot(index: number, delta: number) {
+    const target = index + delta;
+    if (target < 0 || target >= names.length) return;
+    const swap = <T,>(arr: T[]) => {
+      const copy = [...arr];
+      [copy[index], copy[target]] = [copy[target], copy[index]];
+      return copy;
+    };
+    setNames(swap);
+    setTextMode(swap);
+  }
+
   function handleStart() {
     const finalNames = names.map((n, i) => n.trim() || `Player ${i + 1}`);
     const seen = new Set<string>();
@@ -107,9 +119,28 @@ export default function SetupScreen({ onStart, starting, dbError }: Props) {
 
       <div className="field" style={{ marginTop: 10 }}>
         <label>Player names{loadingPlayers && <span style={{ fontWeight: 400, color: "var(--muted)" }}> · loading players…</span>}</label>
+        <div className="seating-hint">Enter players in seating order, clockwise — the dealer indicator rotates from here.</div>
         <div>
           {names.map((name, i) => (
             <div className="name-input-row" key={i}>
+              <div className="reorder-stack">
+                <button
+                  type="button"
+                  aria-label={`Move player ${i + 1} up`}
+                  onClick={() => moveSlot(i, -1)}
+                  disabled={i === 0}
+                >
+                  ▲
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Move player ${i + 1} down`}
+                  onClick={() => moveSlot(i, 1)}
+                  disabled={i === names.length - 1}
+                >
+                  ▼
+                </button>
+              </div>
               <div className="num">{i + 1}.</div>
               {textMode[i] ? (
                 <>

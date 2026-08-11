@@ -83,6 +83,15 @@ h1 .suit {
   font-weight: 700;
 }
 
+.dealer-indicator {
+  font-size: 13px;
+  color: var(--muted);
+  margin: -6px 0 14px;
+}
+.dealer-indicator strong {
+  color: var(--card-ink);
+}
+
 label {
   display: block;
   font-weight: 600;
@@ -269,10 +278,38 @@ select {
   min-width: 0;
 }
 .name-input-row .num {
-  width: 26px;
+  width: 20px;
   color: var(--muted);
   font-weight: 700;
   font-size: 14px;
+}
+.seating-hint {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin: -4px 0 10px;
+}
+.reorder-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: none;
+}
+.reorder-stack button {
+  width: 22px;
+  height: 17px;
+  padding: 0;
+  border: 1px solid #d8d8d8;
+  border-radius: 4px;
+  background: #fafafa;
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1;
+  cursor: pointer;
+}
+.reorder-stack button:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
 }
 
 table.scoreboard {

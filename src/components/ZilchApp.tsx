@@ -348,6 +348,13 @@ export default function ZilchApp() {
   }
 
   const lastRound = state.history[state.history.length - 1];
+  // Whoever's "turn" it is to deal, by hands actually played so far — not by
+  // the round's card count, which climbs then descends and isn't monotonic.
+  // This also happens to stay correct while re-editing a round: editing pops
+  // that round back out of history first, landing history.length on the same
+  // value it had the first time this round was dealt.
+  const dealerIndex = state.players.length > 0 ? state.history.length % state.players.length : 0;
+  const dealerName = state.players[dealerIndex]?.name;
 
   return (
     <div className="app">
@@ -380,6 +387,7 @@ export default function ZilchApp() {
           round={state.round}
           trump={state.trump}
           bids={state.bids}
+          dealerName={dealerName}
           onTrumpChange={handleTrumpChange}
           onBidChange={handleBidChange}
           onLockIn={handleLockIn}
