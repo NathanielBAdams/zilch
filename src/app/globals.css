@@ -420,6 +420,162 @@ table.scoreboard td {
   margin-bottom: 12px;
 }
 
+.history-tabs {
+  display: flex;
+  gap: 6px;
+  background: #f0f0f0;
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 16px;
+}
+.history-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.history-tab.active {
+  background: #fff;
+  color: var(--card-ink);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+}
+
+.history-empty {
+  color: var(--muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 20px 0;
+}
+
+table.history-table th {
+  padding-bottom: 8px;
+}
+table.history-table td {
+  text-align: left;
+}
+.history-table .history-section-row td {
+  padding: 14px 4px 6px;
+  border-top: none;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--card-ink);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.history-table tr.history-section-row:first-child td {
+  padding-top: 2px;
+}
+.player-cell-sm {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+}
+.crown {
+  font-size: 12px;
+}
+.hit-yes {
+  color: var(--win);
+  font-weight: 800;
+}
+.hit-no {
+  color: var(--muted);
+}
+.pts-delta {
+  color: var(--muted);
+}
+.trump-sym-sm {
+  font-size: 16px;
+  line-height: 1;
+  margin-left: 2px;
+}
+.trump-sym-sm.red {
+  color: var(--red-suit);
+}
+.trump-sym-sm.black {
+  color: var(--black-suit);
+}
+
+.chart-wrap {
+  margin-bottom: 4px;
+}
+.chart-caption {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  margin: 0 0 8px;
+}
+.score-chart {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: none;
+}
+.chart-grid {
+  stroke: #e1e0d9;
+  stroke-width: 1;
+}
+.chart-axis-text {
+  fill: #898781;
+  font-size: 9px;
+}
+.chart-crosshair {
+  stroke: #c3c2b7;
+  stroke-width: 1;
+}
+.chart-readout {
+  background: #fafafa;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+.chart-readout-header {
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.chart-readout-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  font-size: 14px;
+}
+.chart-readout-color {
+  width: 12px;
+  height: 3px;
+  border-radius: 2px;
+  flex: none;
+}
+.chart-readout-name {
+  font-weight: 600;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chart-readout-delta {
+  color: var(--muted);
+  font-size: 12px;
+}
+.chart-readout-value {
+  font-weight: 800;
+  min-width: 26px;
+  text-align: right;
+}
+
 .footer-note {
   text-align: center;
   color: rgba(255, 255, 255, 0.5);
