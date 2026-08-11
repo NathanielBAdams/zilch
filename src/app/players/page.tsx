@@ -55,7 +55,7 @@ export default function PlayersPage() {
   return (
     <div className="app">
       <h1>
-        <span className="suit">♠</span> Zilch <span className="suit">♥</span>
+        <span className="suit">♦</span> Zilch <span className="suit">♣</span>
       </h1>
       <div className="subtitle">Manage players</div>
       <Link href="/leaderboard" className="btn btn-ghost">

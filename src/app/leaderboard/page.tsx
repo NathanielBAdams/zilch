@@ -21,7 +21,7 @@ export default function LeaderboardPage() {
   return (
     <div className="app">
       <h1>
-        <span className="suit">♠</span> Zilch <span className="suit">♥</span>
+        <span className="suit">♦</span> Zilch <span className="suit">♣</span>
       </h1>
       <div className="subtitle">All-time leaderboard</div>
       <Link href="/" className="btn btn-ghost">

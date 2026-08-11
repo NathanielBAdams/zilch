@@ -34,7 +34,7 @@ export default function GameHeader({
   return (
     <div>
       <h1>
-        <span className="suit">♠</span> Zilch <span className="suit">♥</span>
+        <span className="suit">♦</span> Zilch <span className="suit">♣</span>
       </h1>
       <div className="subtitle">{subtitle}</div>
       {showTrumpBanner && trump && (
