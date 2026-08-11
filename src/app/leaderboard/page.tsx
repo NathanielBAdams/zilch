@@ -2,18 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { fetchLeaderboard, fetchRecentGames, type LeaderboardRow, type RecentGame } from "@/lib/db";
+import { fetchLeaderboard, fetchRecentGames, fetchPlayerStats, type LeaderboardRow, type RecentGame, type PlayerStats } from "@/lib/db";
+import TrendChart from "@/components/TrendChart";
+
+// Below this many rounds played, a hit-rate trend is mostly noise (a single
+// miss swings it by 20-50 points) — hide the line rather than show something
+// misleading.
+const MIN_ROUNDS_FOR_TREND = 3;
 
 export default function LeaderboardPage() {
   const [rows, setRows] = useState<LeaderboardRow[] | null>(null);
   const [recentGames, setRecentGames] = useState<RecentGame[] | null>(null);
+  const [stats, setStats] = useState<Map<string, PlayerStats> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([fetchLeaderboard(), fetchRecentGames()])
-      .then(([lb, games]) => {
+    Promise.all([fetchLeaderboard(), fetchRecentGames(), fetchPlayerStats()])
+      .then(([lb, games, playerStats]) => {
         setRows(lb);
         setRecentGames(games);
+        setStats(playerStats);
       })
       .catch(() => setError("Couldn't load the leaderboard — check your connection and try again."));
   }, []);
@@ -61,6 +69,51 @@ export default function LeaderboardPage() {
           </table>
         )}
       </div>
+
+      {rows && rows.length > 0 && stats && (
+        <div className="card-panel">
+          <label>Stats</label>
+          <table className="scoreboard">
+            <thead>
+              <tr>
+                <th>Player</th>
+                <th>Avg Bid</th>
+                <th>Avg Pts</th>
+                <th>Best Round</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => {
+                const s = stats.get(r.playerId);
+                if (!s) return null;
+                return (
+                  <tr key={r.playerId}>
+                    <td>{r.name}</td>
+                    <td>{s.avgBid.toFixed(1)}</td>
+                    <td>{s.avgPoints.toFixed(1)}</td>
+                    <td className="total-score">{s.bestRound}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {(() => {
+            const trendSeries = rows
+              .map((r) => ({ id: r.playerId, name: r.name, points: stats.get(r.playerId)?.accuracyTrend ?? [] }))
+              .filter((s) => s.points.length >= MIN_ROUNDS_FOR_TREND);
+            return trendSeries.length > 0 ? (
+              <>
+                <div className="seating-hint" style={{ marginTop: 14 }}>
+                  Bid accuracy over time (cumulative hit rate, one point per round played — players under{" "}
+                  {MIN_ROUNDS_FOR_TREND} rounds omitted)
+                </div>
+                <TrendChart series={trendSeries} yDomain={[0, 100]} />
+              </>
+            ) : null;
+          })()}
+        </div>
+      )}
 
       {recentGames && recentGames.length > 0 && (
         <div className="card-panel">

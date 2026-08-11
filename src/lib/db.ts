@@ -210,6 +210,54 @@ export async function fetchLeaderboard(): Promise<LeaderboardRow[]> {
     }));
 }
 
+export type PlayerStats = {
+  playerId: string;
+  avgBid: number;
+  avgPoints: number;
+  bestRound: number;
+  accuracyPct: number;
+  /** Cumulative bid-accuracy % after each round played, in chronological order. */
+  accuracyTrend: number[];
+};
+
+/**
+ * One row per round ever scored, across every game, in chronological order —
+ * grouped client-side per player rather than via a dedicated view, since this
+ * is a read-only rollup with no other consumer.
+ */
+export async function fetchPlayerStats(): Promise<Map<string, PlayerStats>> {
+  const { data, error } = await supabase
+    .from("round_scores")
+    .select("player_id, bid, tricks_taken, points, rounds(created_at)")
+    .order("created_at", { referencedTable: "rounds" });
+  if (error) throw error;
+
+  const totals = new Map<string, { bidSum: number; pointsSum: number; best: number; hits: number; count: number; trend: number[] }>();
+  for (const row of data) {
+    const t = totals.get(row.player_id) ?? { bidSum: 0, pointsSum: 0, best: 0, hits: 0, count: 0, trend: [] };
+    t.bidSum += row.bid;
+    t.pointsSum += row.points;
+    t.best = Math.max(t.best, row.points);
+    t.count += 1;
+    if (row.tricks_taken === row.bid) t.hits += 1;
+    t.trend.push((t.hits / t.count) * 100);
+    totals.set(row.player_id, t);
+  }
+
+  const result = new Map<string, PlayerStats>();
+  for (const [playerId, t] of totals) {
+    result.set(playerId, {
+      playerId,
+      avgBid: t.bidSum / t.count,
+      avgPoints: t.pointsSum / t.count,
+      bestRound: t.best,
+      accuracyPct: (t.hits / t.count) * 100,
+      accuracyTrend: t.trend,
+    });
+  }
+  return result;
+}
+
 export type RecentGame = {
   id: string;
   endedAt: string;
